@@ -186,7 +186,7 @@ if [ -f /etc/grub.d/00_header ] ; then
     cat >$GRUBCFG <<_EOF
 menuentry "Linux" {
     set root=(hd0,1)
-    linux /vmlinuz root=$rootfs $rootwait rw $5 $3 $4 quiet
+    linux /vmlinuz root=$rootfs $rootwait rw $5 $3 $4
 }
 _EOF
     chmod 0444 $GRUBCFG
@@ -201,7 +201,7 @@ if [ ! -f /boot/grub/grub.cfg ] ; then
     echo "timeout 30" >> /boot/grub/menu.lst
     echo "title Live Boot/Install-Image" >> /boot/grub/menu.lst
     echo "root  (hd0,0)" >> /boot/grub/menu.lst
-    echo "kernel /vmlinuz root=$rootfs rw $3 $4 quiet" >> /boot/grub/menu.lst
+    echo "kernel /vmlinuz root=$rootfs rw $3 $4" >> /boot/grub/menu.lst
 fi
 
 cp /run/media/$1/vmlinuz /boot/
