@@ -166,6 +166,12 @@ mkfs.ext3 $rootfs
 echo "Formatting swap partition...($swap)"
 mkswap $swap
 
+# Determine the new uuids
+sync; udevadm settle
+bootfs_uuid="$(udevadm info -q symlink $bootfs | tr ' ' '\n' | grep by-uuid | cut -d/ -f3)"
+swap_uuid="$(udevadm info -q symlink $swap | tr ' ' '\n' | grep by-uuid | cut -d/ -f3)"
+rootfs_uuid="$(udevadm info -q property $rootfs | grep ID_PART_ENTRY_UUID | cut -d= -f2)"
+
 mkdir /tgt_root
 mkdir /src_root
 mkdir -p /boot
@@ -176,8 +182,8 @@ mount -o rw,loop,noatime,nodiratime /run/media/$1/$2 /src_root
 echo "Copying rootfs files..."
 cp -a /src_root/* /tgt_root
 if [ -d /tgt_root/etc/ ] ; then
-    echo "$swap                swap             swap       defaults              0  0" >> /tgt_root/etc/fstab
-    echo "$bootfs              /boot            ext3       defaults              1  2" >> /tgt_root/etc/fstab
+    echo "/dev/disk/by-uuid/$swap_uuid                swap             swap       defaults              0  0" >> /tgt_root/etc/fstab
+    echo "/dev/disk/by-uuid/$bootfs_uuid              /boot            ext3       defaults              1  2" >> /tgt_root/etc/fstab
     # We dont want udev to mount our root device while we're booting...
     if [ -d /tgt_root/etc/udev/ ] ; then
 	echo "/dev/${device}" >> /tgt_root/etc/udev/mount.blacklist
@@ -196,7 +202,7 @@ if [ -f /etc/grub.d/00_header ] ; then
     cat >$GRUBCFG <<_EOF
 menuentry "Linux" {
     set root=(hd0,1)
-    linux /vmlinuz root=$rootfs $rootwait rw $5 $3 $4
+    linux /vmlinuz root=PARTUUID=$rootfs_uuid $rootwait rw $5 $3 $4
 }
 _EOF
     chmod 0444 $GRUBCFG
@@ -211,7 +217,7 @@ if [ ! -f /boot/grub/grub.cfg ] ; then
     echo "timeout 30" >> /boot/grub/menu.lst
     echo "title Live Boot/Install-Image" >> /boot/grub/menu.lst
     echo "root  (hd0,0)" >> /boot/grub/menu.lst
-    echo "kernel /vmlinuz root=$rootfs rw $3 $4" >> /boot/grub/menu.lst
+    echo "kernel /vmlinuz root=PARTUUID=$rootfs_uuid rw $3 $4" >> /boot/grub/menu.lst
 fi
 
 cp /run/media/$1/vmlinuz /boot/
