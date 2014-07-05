@@ -163,6 +163,12 @@ mkfs.ext3 $rootfs
 echo "Formatting swap partition...($swap)"
 mkswap $swap
 
+# Determine the new uuids
+sync; udevadm settle
+bootfs_uuid="$(udevadm info -q symlink $bootfs | tr ' ' '\n' | grep by-uuid | cut -d/ -f3)"
+swap_uuid="$(udevadm info -q symlink $swap | tr ' ' '\n' | grep by-uuid | cut -d/ -f3)"
+rootfs_partuuid="$(udevadm info -q symlink $rootfs | tr ' ' '\n' | grep by-partuuid | cut -d/ -f3)"
+
 mkdir /tgt_root
 mkdir /src_root
 mkdir -p /boot
@@ -173,8 +179,8 @@ mount -o rw,loop,noatime,nodiratime /run/media/$1/$2 /src_root
 echo "Copying rootfs files..."
 cp -a /src_root/* /tgt_root
 if [ -d /tgt_root/etc/ ] ; then
-    echo "$swap                swap             swap       defaults              0  0" >> /tgt_root/etc/fstab
-    echo "$bootfs              /boot            vfat       defaults              1  2" >> /tgt_root/etc/fstab
+    echo "/dev/disk/by-uuid/$swap_uuid           swap             swap       defaults              0  0" >> /tgt_root/etc/fstab
+    echo "/dev/disk/by-uuid/$bootfs_uuid         /boot            vfat       defaults              1  2" >> /tgt_root/etc/fstab
     # We dont want udev to mount our root device while we're booting...
     if [ -d /tgt_root/etc/udev/ ] ; then
 	echo "/dev/${device}" >> /tgt_root/etc/udev/mount.blacklist
@@ -205,7 +211,7 @@ if [ -f /run/media/$1/EFI/BOOT/grub.cfg ]; then
     # Delete any root= strings
     sed -i "s/ root=[^ ]*/ /" $GRUBCFG
     # Add the root= and other standard boot options
-    sed -i "s@linux /vmlinuz *@linux /vmlinuz root=$rootfs rw $rootwait @" $GRUBCFG
+    sed -i "s@linux /vmlinuz *@linux /vmlinuz root=PARTUUID=$rootfs_partuuid rw $rootwait @" $GRUBCFG
 fi
 
 if [ -d /run/media/$1/loader ]; then
@@ -221,7 +227,7 @@ if [ -d /run/media/$1/loader ]; then
     # delete any root= strings
     sed -i "s/ root=[^ ]*/ /" $GUMMIBOOT_CFGS
     # add the root= and other standard boot options
-    sed -i "s@options *@options root=$rootfs rw $rootwait @" $GUMMIBOOT_CFGS
+    sed -i "s@options *@options root=PARTUUID=$rootfs_partuuid rw $rootwait @" $GUMMIBOOT_CFGS
 fi
 
 umount /tgt_root
