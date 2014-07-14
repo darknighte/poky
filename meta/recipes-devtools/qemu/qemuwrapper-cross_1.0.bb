@@ -11,6 +11,7 @@ do_install () {
 	qemu_binary=${@qemu_target_binary(d)}
 	qemu_options='${@d.getVar("QEMU_OPTIONS_%s" % d.getVar('PACKAGE_ARCH', True), True) or d.getVar('QEMU_OPTIONS', True) or ""}'
 	echo "$qemu_binary $qemu_options \"\$@\"" >> ${D}${bindir_crossscripts}/qemuwrapper
+	echo "echo $(which $qemu_binary) $qemu_options \"\$@\" >> /work/dmoseley/qemu.log" >> ${D}${bindir_crossscripts}/qemuwrapper
 	fallback_qemu_bin=
 	case $qemu_binary in
 		"qemu-i386")
