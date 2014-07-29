@@ -143,14 +143,17 @@ echo "Creating new partition table on /dev/${device} ..."
 parted /dev/${device} mklabel gpt
 
 echo "Creating boot partition on $bootfs"
-parted /dev/${device} mkpart primary 0% $boot_size
+parted /dev/${device} mkpart primary fat32 0% $boot_size
+parted /dev/${device} name 1 "boot"
 parted /dev/${device} set 1 boot on
 
 echo "Creating rootfs partition on $rootfs"
-parted /dev/${device} mkpart primary $rootfs_start $rootfs_end
+parted /dev/${device} mkpart primary ext3 $rootfs_start $rootfs_end
+parted /dev/${device} name 2 "rootfs"
 
 echo "Creating swap partition on $swap"
-parted /dev/${device} mkpart primary $swap_start 100%
+parted /dev/${device} mkpart primary linux-swap $swap_start 100%
+parted /dev/${device} name 3 "swap"
 
 parted /dev/${device} print
 
