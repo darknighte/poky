@@ -8,8 +8,8 @@
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
-# We need 20 Mb for the boot partition
-boot_size=20
+# We need 250 Mb for the boot partition
+boot_size=512
 
 # 5% for swap
 swap_ratio=5
