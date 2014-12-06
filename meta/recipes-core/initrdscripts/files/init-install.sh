@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh -ex
 #
 # Copyright (C) 2008-2011 Intel
 #
