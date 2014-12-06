@@ -142,26 +142,34 @@ echo "Swap partition size:   $swap_size MB ($swap)"
 echo "*****************"
 echo "Deleting partition table on /dev/${device} ..."
 dd if=/dev/zero of=/dev/${device} bs=512 count=2
+sync; udevadm settle
 
 echo "Creating new partition table on /dev/${device} ..."
 parted /dev/${device} mklabel msdos
+sync; udevadm settle
 
 echo "Creating boot partition on $bootfs"
 parted /dev/${device} mkpart primary 0% $boot_size
+sync; udevadm settle
 
 echo "Creating rootfs partition on $rootfs"
 parted /dev/${device} mkpart primary $rootfs_start $rootfs_end
+sync; udevadm settle
 
 echo "Creating swap partition on $swap"
 parted /dev/${device} mkpart primary $swap_start 100%
+sync; udevadm settle
 
 parted /dev/${device} print
+sync; udevadm settle
 
 echo "Formatting $bootfs to ext3..."
 mkfs.ext3 $bootfs
+sync; udevadm settle
 
 echo "Formatting $rootfs to ext3..."
 mkfs.ext3 $rootfs
+sync; udevadm settle
 
 echo "Formatting swap partition...($swap)"
 mkswap $swap
@@ -177,6 +185,7 @@ mkdir /src_root
 mkdir -p /boot
 
 # Handling of the target root partition
+sync; udevadm settle
 mount $rootfs /tgt_root
 mount -o rw,loop,noatime,nodiratime /run/media/$1/$2 /src_root
 echo "Copying rootfs files..."
@@ -193,6 +202,7 @@ umount /tgt_root
 umount /src_root
 
 # Handling of the target boot partition
+sync; udevadm settle
 mount $bootfs /boot
 echo "Preparing boot partition..."
 if [ -f /etc/grub.d/00_header ] ; then
