@@ -8,11 +8,16 @@ ARM_INSTRUCTION_SET_armv5 = "arm"
 BOOST_LIBS = "\
 	atomic \
 	chrono \
+	container \
 	date_time \
+	exception \
 	filesystem \
 	graph \
+	graph_parallel \
 	iostreams \
 	log \
+	math \
+	mpi \
 	program_options \
 	random \
 	regex \
@@ -22,12 +27,24 @@ BOOST_LIBS = "\
 	timer \
 	test \
 	thread \
+	wave \
 	"
 
-# optional boost-python library
-PACKAGECONFIG ??= ""
+# only supported by x86 and powerpc
+BOOST_LIBS_append_x86 = " context coroutine"
+BOOST_LIBS_append_x86-64 = " context coroutine"
+BOOST_LIBS_append_powerpc = " context coroutine"
+
+# optional libraries
+PACKAGECONFIG ??= "locale"
 PACKAGECONFIG[python] = ",,python python3"
-BOOST_LIBS += "${@bb.utils.contains('PACKAGECONFIG', 'python', 'python python3', '', d)}"
+PACKAGECONFIG[locale] = ",,icu"
+
+BOOST_LIBS += "\
+    ${@bb.utils.contains('PACKAGECONFIG', 'python', 'python python3', '', d)} \
+    ${@bb.utils.contains('PACKAGECONFIG', 'locale', 'locale', '', d)} \
+"
+
 inherit python-dir
 PYTHON_ROOT = "${STAGING_DIR_HOST}/${prefix}"
 
@@ -54,6 +71,7 @@ python __anonymous () {
 }
 
 # Override the contents of specific packages
+FILES_${PN}-locale = "${libdir}/libboost_locale.so.*"
 FILES_boost-serialization = "${libdir}/libboost_serialization*.so.* \
 	${libdir}/libboost_wserialization*.so.*"
 FILES_boost-test = "${libdir}/libboost_prg_exec_monitor*.so.* \
